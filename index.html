@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#18251f" />
+  <title>Meadowmere — A Little Farm Life</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Nunito:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Meadowmere home"><span class="brand-mark">✿</span><span>meadow<span class="brand-light">mere</span></span></a>
+      <div class="season-card"><span class="season-icon">☀</span><span><b id="season">Spring</b><small id="day-label">Day 1</small></span></div>
+      <div class="top-stats">
+        <div class="stat"><span class="stat-icon">◷</span><span id="clock">6:00 AM</span></div>
+        <div class="stat gold"><span class="stat-icon">✦</span><span id="gold">120</span></div>
+        <button id="sound-toggle" class="icon-button" aria-label="Toggle sound" title="Toggle sound">♫</button>
+        <button id="help-button" class="icon-button" aria-label="How to play" title="How to play">?</button>
+      </div>
+    </header>
+    <section class="game-stage" aria-label="Farm game">
+      <canvas id="game" width="960" height="600" aria-label="Meadowmere farm. Use WASD or arrow keys to move."></canvas>
+      <div class="scene-vignette"></div>
+      <div class="quest-card"><div class="quest-heading"><span>✦</span> TODAY'S LITTLE PLAN</div><div id="quest-text">Clear a patch, plant a seed, and give it a drink.</div><div class="quest-progress"><i id="quest-bar"></i></div></div>
+      <div class="weather-pill"><span>☀</span> Clear skies <i></i></div>
+      <div class="toast" id="toast" aria-live="polite"></div>
+      <div class="modal-backdrop hidden" id="modal-backdrop">
+        <section class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <button class="modal-close" id="modal-close" aria-label="Close">×</button>
+          <div class="modal-kicker">A QUIET MOMENT IN MEADOWMERE</div>
+          <h2 id="modal-title">Welcome home</h2>
+          <div id="modal-content"></div>
+        </section>
+      </div>
+      <div class="interaction-hint" id="interaction-hint"><kbd>E</kbd><span>Talk</span></div>
+    </section>
+    <footer class="bottom-bar">
+      <div class="toolbelt">
+        <span class="belt-label">YOUR TOOLS</span>
+        <button class="tool-slot selected" data-tool="hoe"><span class="tool-number">1</span><span class="tool-emoji">⌁</span><span class="tool-name">Hoe</span></button>
+        <button class="tool-slot" data-tool="seed"><span class="tool-number">2</span><span class="tool-emoji">✿</span><span class="tool-name">Seeds <b id="seed-count">8</b></span></button>
+        <button class="tool-slot" data-tool="water"><span class="tool-number">3</span><span class="tool-emoji">♒</span><span class="tool-name">Water</span></button>
+        <button class="tool-slot" data-tool="harvest"><span class="tool-number">4</span><span class="tool-emoji">⚒</span><span class="tool-name">Harvest</span></button>
+      </div>
+      <div class="energy-wrap"><div class="energy-label"><span>ENERGY</span><b id="energy-value">100 / 100</b></div><div class="energy-track"><i id="energy-bar"></i></div><div class="energy-spark">✦</div></div>
+      <button class="journal-button" id="journal-button"><span>▤</span><span>Journal</span><kbd>J</kbd></button>
+      <div class="touch-controls" aria-label="Touch controls">
+        <div class="dpad">
+          <button data-dir="up" aria-label="Move up">▲</button>
+          <button data-dir="left" aria-label="Move left">◀</button>
+          <button data-dir="down" aria-label="Move down">▼</button>
+          <button data-dir="right" aria-label="Move right">▶</button>
+        </div>
+        <button class="touch-action" id="touch-action">USE</button>
+      </div>
+    </footer>
+    <div class="mobile-tip">A small patch of earth, and a whole lot of possibility.</div>
+  </main>
+  <script src="game.js"></script>
+</body>
+</html>
