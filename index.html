@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>2 MINUTE RAMPAGE</title>
+  <style>
+    :html, body { width:100%; height:100%; overflow:hidden; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#0a0a12; color:#fff; font-family:Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif; }
+    canvas { display:block; width:100%; height:100%; touch-action:none; }
+    #ui { position:fixed; inset:0; pointer-events:none; }
+    .top { position:absolute; left:22px; right:22px; top:18px; display:flex; justify-content:space-between; align-items:flex-start; text-transform:uppercase; }
+    .brand { font-size:clamp(20px,3vw,38px); letter-spacing:-1px; text-shadow:3px 3px 0 #111; transform:skew(-8deg); }
+    .brand em { color:#ffdf32; font-style:normal; }
+    .stats { display:flex; gap:10px; }
+    .stat { min-width:120px; padding:8px 12px 7px; background:rgba(11,11,18,.88); border:2px solid #fff; transform:skew(-8deg); box-shadow:5px 5px 0 rgba(0,0,0,.35); text-align:right; }
+    .stat label { display:block; font:700 10px Arial,sans-serif; letter-spacing:2px; color:#aaa; }
+    .stat b { display:block; font-size:24px; line-height:1.1; }
+    #timer { color:#ffdf32; }
+    #combo { position:absolute; left:24px; bottom:54px; display:none; transform:rotate(-4deg); text-shadow:4px 4px 0 #111; }
+    #combo big { display:block; color:#ffdf32; font-size:clamp(44px,8vw,92px); line-height:.82; }
+    #combo span { font:900 14px Arial,sans-serif; letter-spacing:3px; }
+    #trick { position:absolute; left:50%; top:25%; transform:translate(-50%,-50%) rotate(-2deg); font-size:clamp(28px,5vw,64px); color:#fff; opacity:0; text-shadow:4px 4px 0 #ff2d63; white-space:nowrap; }
+    #start, #end { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:linear-gradient(90deg,rgba(6,7,15,.82),rgba(6,7,15,.42)); pointer-events:auto; text-align:center; }
+    #end { display:none; }
+    .poster { transform:rotate(-2deg); }
+    .poster h1 { margin:0; font-size:clamp(58px,11vw,150px); line-height:.75; letter-spacing:-5px; text-shadow:7px 7px 0 #ff2d63; }
+    .poster h1 span { color:#ffdf32; }
+    .poster p { margin:26px 0 18px; font:800 14px Arial,sans-serif; letter-spacing:4px; }
+    button { border:3px solid #fff; background:#ffdf32; color:#111; font:900 18px Arial,sans-serif; letter-spacing:2px; padding:14px 24px; transform:skew(-8deg); cursor:pointer; box-shadow:7px 7px 0 #ff2d63; pointer-events:auto; }
+    .controls { position:absolute; bottom:18px; left:50%; transform:translateX(-50%); display:flex; gap:8px; }
+    .key { width:44px; height:44px; border:2px solid rgba(255,255,255,.7); border-radius:8px; display:flex; align-items:center; justify-content:center; font:900 16px Arial,sans-serif; background:rgba(10,10,18,.72); }
+    @media (pointer:coarse) { .controls { display:none; } }
+    #touch { position:absolute; inset:0; display:none; pointer-events:none; }
+    #touch div { position:absolute; bottom:22px; width:68px; height:68px; border:2px solid rgba(255,255,255,.55); border-radius:50%; background:rgba(10,10,18,.45); pointer-events:auto; display:flex; align-items:center; justify-content:center; font:900 22px Arial; }
+    #left { left:18px; } #right { left:94px; } #jump { right:18px; } #grind { right:94px; }
+    @media (pointer:coarse) { #touch { display:block; } }
+  </style>
+</head>
+<body>
+  <canvas id="game"></canvas>
+  <div id="ui">
+    <div class="top">
+      <div class="brand">2 MINUTE <em>RAMPAGE</em></div>
+      <div class="stats"><div class="stat"><label>SCORE</label><b id="score">000000</b></div><div class="stat"><label>TIME</label><b id="timer">2:00</b></div></div>
+    </div>
+    <div id="combo"><big>×<span id="comboVal">1</span></big><span>COMBO</span></div>
+    <div id="trick"></div>
+    <div id="start">
+      <div class="poster"><h1>2 MINUTE<br><span>RAMPAGE</span></h1><p>LAND TRICKS • BUILD COMBOS • OWN THE PARK</p><button id="startBtn">DROP IN</button></div>
+      <div class="controls"><div class="key">A</div><div class="key">D</div><div class="key">W</div><div class="key">S</div></div>
+    </div>
+    <div id="end"><div class="poster"><h1>RUN<br><span>OVER</span></h1><p id="finalScore">SCORE 000000</p><button id="againBtn">SKATE AGAIN</button></div></div>
+    <div id="touch"><div id="left">←</div><div id="right">→</div><div id="grind">G</div><div id="jump">↑</div></div>
+  </div>
+<script>
+const canvas=document.getElementById('game'), ctx=canvas.getContext('2d');
+let W,H,DPR;
+function resize(){DPR=Math.min(devicePixelRatio||1,2);W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)} addEventListener('resize',resize);resize();
+const keys={}; addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true; if([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key))e.preventDefault()});
+addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false});
+function bind(id,key){let el=document.getElementById(id);el.addEventListener('pointerdown',e=>{e.preventDefault();keys[key]=true});el.addEventListener('pointerup',()=>keys[key]=false);el.addEventListener('pointercancel',()=>keys[key]=false)} bind('left','a');bind('right','d');bind('jump',' ');bind('grind','s');
+let started=false, ended=false, last=0, timeLeft=120, score=0, combo=1, comboTime=0;
+const player={x:120,y:0,vx:0,vy:0,ground:false,spin:0,grinding:false,trail:[]};
+const stars=Array.from({length:70},()=>({x:Math.random(),y:Math.random(),r:Math.random()*1.5+.3}));
+function groundY(x){x=((x%W)+W)%W; const roll=H*.72+Math.sin(x*.009)*26; const ramp=H*.64+H*.08*Math.exp(-Math.pow((x-W*.58)/180,2)); return Math.min(roll,ramp)}
+function start(){started=true;ended=false;timeLeft=120;score=0;combo=1;comboTime=0;player.x=120;player.y=groundY(120)-30;player.vx=0;player.vy=0;player.spin=0;document.getElementById('start').style.display='none';document.getElementById('end').style.display='none';last=performance.now()}
+document.getElementById('startBtn').onclick=start; document.getElementById('againBtn').onclick=start;
+function trickName(){const n=['KICKFLIP','HEELFLIP','360 FLIP','INDY GRAB','MUTE GRAB','METHOD AIR','BONLESS','TAILWHIP'];return n[Math.floor(Math.random()*n.length)]}
+function addTrick(){if(!started||ended)return;const bonus=250*combo;score+=bonus;combo=Math.min(5,combo+1);comboTime=3;const el=document.getElementById('trick');el.textContent=trickName()+'  +'+bonus;el.style.opacity=1;el.style.animation='none';clearTimeout(el._t);el._t=setTimeout(()=>el.style.opacity=0,900)}
+function update(dt){dt=Math.min(dt,.032);if(started&&!ended){timeLeft-=dt;if(timeLeft<=0){timeLeft=0;ended=true;document.getElementById('end').style.display='flex';document.getElementById('finalScore').textContent='SCORE '+String(score).padStart(6,'0')} }
+ if(!started||ended)return;
+ const accel=keys.a?-780:keys.d?780:0;player.vx+=accel*dt;player.vx*=keys.a||keys.d?.92:.98;player.vx=Math.max(-520,Math.min(520,player.vx));
+ player.x+=player.vx*dt;if(player.x<35){player.x=35;player.vx=0}if(player.x>W-35){player.x=W-35;player.vx=0}
+ const jump=(keys[' ']||keys.w||keys.arrowup); if(jump&&player.ground){player.vy=-640;player.ground=false;player.spin=(player.vx>=0?1:-1)*(Math.random()>.5?1:1)}
+ if(keys.s&&player.ground&&Math.abs(player.vx)>80){player.grinding=true;player.vy=0}else player.grinding=false;
+ if(!player.ground){player.vy+=1500*dt;player.spin+=player.vx*.018*dt+1.8*dt}
+ player.y+=player.vy*dt;
+ const gy=groundY(player.x)-28;if(player.y>=gy&&!player.grinding){if(!player.ground&&Math.abs(player.vy)>220)addTrick();player.y=gy;player.vy=0;player.ground=true;player.spin*=0.1}else if(!player.grinding){player.ground=false}
+ if(player.grinding){player.y=gy;player.vx=Math.sign(player.vx||1)*260}
+ if(comboTime>0){comboTime-=dt;if(comboTime<=0)combo=1}
+ player.trail.unshift({x:player.x,y:player.y+24,a:1});if(player.trail.length>12)player.trail.pop();}
+function draw(){ctx.clearRect(0,0,W,H);
+ const sky=ctx.createLinearGradient(0,0,0,H);sky.addColorStop(0,'#11152a');sky.addColorStop(.7,'#2a3151');sky.addColorStop(1,'#111321');ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+ ctx.fillStyle='#ffdf32';ctx.globalAlpha=.7;for(const s of stars){ctx.globalAlpha=.15+s.r*.18;ctx.fillRect(s.x*W,s.y*H*.55,s.r,s.r)}ctx.globalAlpha=1;
+ ctx.fillStyle='#11131f';ctx.beginPath();ctx.moveTo(0,H*.58);for(let x=0;x<=W;x+=30)ctx.lineTo(x,H*.58-Math.sin(x*.005)*20-Math.sin(x*.012)*8);ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.fill();
+ ctx.strokeStyle='#3d4668';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(0,H*.61);for(let x=0;x<=W;x+=20)ctx.lineTo(x,H*.61-Math.sin(x*.005)*20-Math.sin(x*.012)*8);ctx.stroke();
+ ctx.fillStyle='#171a28';ctx.fillRect(0,groundY(0)-10,W,H-(groundY(0)-10));
+ ctx.fillStyle='#272c40';ctx.fillRect(0,groundY(0)+0,W,12);ctx.fillStyle='#ffdf32';ctx.fillRect(0,groundY(0)+12,W,3);
+ ctx.strokeStyle='#1d2030';ctx.lineWidth=2;for(let x=0;x<W;x+=45){ctx.beginPath();ctx.moveTo(x,groundY(x)+15);ctx.lineTo(x+40,H);ctx.stroke()}for(let y=groundY(20)+25;y<H;y+=45){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+ drawPark();drawPlayer();drawHUD();}
+function drawPark(){ctx.save();ctx.translate(W*.58,H*.64);
+ ctx.fillStyle='#30354a';ctx.beginPath();ctx.moveTo(-210,0);ctx.quadraticCurveTo(-180,-180,0,-150);ctx.quadraticCurveTo(180,-180,210,0);ctx.lineTo(210,50);ctx.quadraticCurveTo(0,15,-210,50);ctx.closePath();ctx.fill();ctx.strokeStyle='#ffdf32';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-210,0);ctx.quadraticCurveTo(-180,-180,0,-150);ctx.quadraticCurveTo(180,-180,210,0);ctx.stroke();ctx.restore();
+ ctx.fillStyle='#282d40';ctx.fillRect(W*.13,H*.60,8,H*.12);ctx.fillRect(W*.13+90,H*.60,8,H*.12);ctx.fillStyle='#d9d9cc';ctx.fillRect(W*.13-15,H*.58,130,12);
+ ctx.fillStyle='#ffdf32';ctx.font='900 12px Arial';ctx.textAlign='center';ctx.fillText('NO BRAKES',W*.18,H*.64);
+ ctx.fillStyle='#1c2030';ctx.fillRect(W*.78,H*.56,150,8);ctx.fillRect(W*.78,H*.56,8,H*.16);ctx.fillRect(W*.78+142,H*.56,8,H*.16);ctx.fillStyle='#e5e1d2';ctx.fillRect(W*.78,H*.54,150,7); }
+function drawPlayer(){ctx.save();ctx.translate(player.x,player.y);ctx.rotate(player.ground?Math.atan2(groundY(player.x+20)-groundY(player.x-20),40):player.spin*.12);for(const t of player.trail){ctx.globalAlpha=t.a*.12;ctx.fillStyle='#ffdf32';ctx.beginPath();ctx.ellipse(t.x-player.x,t.y-player.y,18,5,0,0,7);ctx.fill()}ctx.globalAlpha=1;
+ ctx.fillStyle='#15151d';ctx.fillRect(-24,26,48,7);ctx.fillStyle='#ffdf32';ctx.fillRect(-20,24,40,4);ctx.fillStyle='#f0ece1';ctx.fillRect(-19,34,8,4);ctx.fillRect(11,34,8,4);
+ ctx.fillStyle='#ff2d63';ctx.fillRect(-12,-2,24,28);ctx.fillStyle='#22283a';ctx.fillRect(-20,18,12,18);ctx.fillRect(8,18,12,18);
+ ctx.fillStyle='#c99a75';ctx.beginPath();ctx.arc(0,-12,10,0,7);ctx.fill();ctx.fillStyle='#3a251f';ctx.beginPath();ctx.arc(-3,-15,11,Math.PI,Math.PI*2);ctx.fill();ctx.fillStyle='#111';ctx.fillRect(-12,-13,24,4);ctx.restore();}
+function drawHUD(){document.getElementById('score').textContent=String(score).padStart(6,'0');const m=Math.floor(timeLeft/60),s=Math.ceil(timeLeft%60);document.getElementById('timer').textContent=m+':'+String(s).padStart(2,'0');document.getElementById('comboVal').textContent=combo;document.getElementById('combo').style.display=combo>1?'block':'none'}
+function loop(now){const dt=(now-last)/1000||0;last=now;update(dt);draw();requestAnimationFrame(loop)}requestAnimationFrame(loop);
+</script>
+</body>
+</html>
